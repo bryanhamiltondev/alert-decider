@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>alert-decider demo</title>
+<style>
+  body { background: #0d1017; color: #c7d1dc; font: 16px/1.6 system-ui, sans-serif; max-width: 640px; margin: 12vh auto; padding: 0 24px; }
+  h1 { color: #e8ecf2; }
+  button { background: #22d3ee; color: #04121a; border: 0; border-radius: 999px; padding: 10px 20px; font-weight: 700; cursor: pointer; }
+  #state { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: #8fa3b8; margin-top: 24px; white-space: pre-wrap; }
+  #pp { position: fixed; left: 16px; bottom: 16px; max-width: 320px; background: #0b0f14; border: 1px solid #1a2733; border-radius: 12px; padding: 16px 18px; display: none; }
+  #pp.on { display: block; }
+  #pp .t { color: #22d3ee; font-weight: 700; margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<h1>alert-decider demo</h1>
+<p>The "moment of intent" here is clicking the star. Click it and the decider decides whether you may be asked. Deny or dismiss, then reload - the state machine remembers.</p>
+<p><button id="fav">&#9734; Favorite this page</button></p>
+<div id="pp"><p class="t">Never miss an update</p><p id="ppx">Turn on notifications?</p><button id="ppyes">Turn on</button> <button id="ppno">Not now</button></div>
+<div id="state"></div>
+<script src="../src/alert-decider.js"></script>
+<script>
+  function showState() { document.getElementById('state').textContent = 'localStorage: ' + (localStorage.getItem('demoAlerts') || '{}') + '\npermission: ' + (window.Notification ? Notification.permission : 'unsupported'); }
+  showState();
+  AlertDecider.init({
+    storageKey: 'demoAlerts',
+    cooldownDays: 7,
+    onAsk: function (d) {
+      var pp = document.getElementById('pp'); pp.classList.add('on');
+      document.getElementById('ppyes').onclick = function () {
+        d.accepted().then(function (r) {
+          document.getElementById('ppx').textContent = r.ok ? 'Subscribed (demo: no real server).' : 'Permission ' + r.reason + '.';
+          showState();
+        });
+      };
+      document.getElementById('ppno').onclick = function () { d.later(); pp.classList.remove('on'); showState(); };
+    }
+  });
+  document.getElementById('fav').addEventListener('click', function () {
+    this.innerHTML = '&#9733; Favorited';
+    AlertDecider.onIntent();
+  });
+</script>
+</body>
+</html>
